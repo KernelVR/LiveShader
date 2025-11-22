@@ -5,6 +5,8 @@
 #include <chrono>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include <GLFW/glfw3native.h>
 #include <png.h>
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
@@ -184,6 +186,10 @@ typedef struct _UniformValue {
 
 #include <map>
 #include <math.h>
+#include <windows.h>
+
+extern unsigned char g_mainFontJp[];
+extern int g_mainFontJp_Len;
 
 static std::chrono::_V2::system_clock::time_point prev_now;
 
@@ -206,6 +212,9 @@ int program_main(void){
 			break;
 		}
 
+		// HWND hwnd = glfwGetWin32Window(window);
+		// SetWindowLong(hwnd, GWL_STYLE, GetWindowLong(hwnd, GWL_STYLE) & ~WS_SYSMENU);
+
 		glfwMakeContextCurrent(window);
 		glfwSwapInterval(1);
 
@@ -216,21 +225,20 @@ int program_main(void){
 				break;
 			}
 
-			extern unsigned char g_mainFontJp[];
-			extern int g_mainFontJp_Len;
-
-			// ImGui init
 			IMGUI_CHECKVERSION();
 			ImGui::CreateContext();
 			ImGuiIO& io = ImGui::GetIO();
 			io.LogFilename = NULL;
 			io.IniFilename = NULL;
 			io.FontGlobalScale = 1.25f;
-			ImFontConfig config;
-			config.MergeMode = true;
-			io.Fonts->AddFontDefault();
-			// io.Fonts->AddFontFromFileTTF("./NotoSansJP-Medium.ttf", 18.0f, &config, io.Fonts->GetGlyphRangesJapanese());
-			io.Fonts->AddFontFromMemoryTTF(g_mainFontJp, g_mainFontJp_Len, 18.0f, &config, io.Fonts->GetGlyphRangesJapanese());
+			{
+				ImFontConfig config;
+				config.MergeMode = true;
+				config.FontDataOwnedByAtlas = false;
+				io.Fonts->AddFontDefault();
+				// io.Fonts->AddFontFromFileTTF("./NotoSansJP-Medium.ttf", 18.0f, &config, io.Fonts->GetGlyphRangesJapanese());
+				io.Fonts->AddFontFromMemoryTTF(g_mainFontJp, g_mainFontJp_Len, 18.0f, &config, io.Fonts->GetGlyphRangesJapanese());
+			}
 
 			ImGui::StyleColorsDark();
 			ImGui_ImplGlfw_InitForOpenGL(window, true);
@@ -245,13 +253,13 @@ int program_main(void){
 			}
 		*/
 
-			// Fullscreen quad (NDC)
-			static const float quadVerts[] = {
+			static const float quadVerts[] = { // Fullscreen quad (NDC)
 				-1.0f, -1.0f,
 				 1.0f, -1.0f,
 				-1.0f,  1.0f,
 				 1.0f,  1.0f
 			};
+
 			GLuint vao, vbo;
 			glGenVertexArrays(1, &vao);
 			glGenBuffers(1, &vbo);
@@ -259,7 +267,7 @@ int program_main(void){
 			glBindBuffer(GL_ARRAY_BUFFER, vbo);
 			glBufferData(GL_ARRAY_BUFFER, sizeof(quadVerts), quadVerts, GL_STATIC_DRAW);
 			glEnableVertexAttribArray(0);
-			glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2*sizeof(float), (void*)0);
+			glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), NULL);
 			glBindVertexArray(0);
 
 			GLuint fbo = 0, colorTex = 0;
@@ -294,16 +302,17 @@ int program_main(void){
 			bool need_recompile = false;
 			static char shader_buf[1<<16];
 			memset(shader_buf, 0, sizeof(shader_buf));
-			strncpy(shader_buf, frag_text.c_str(), sizeof(shader_buf)-1);
+			strncpy(shader_buf, frag_text.c_str(), sizeof(shader_buf) - 1);
 
 			// mouse tracking
 			double mouse_x=0, mouse_y=0;
 			bool mouse_down=false;
 			double click_x=0, click_y=0;
+			bool is_run = true;
 
 			prev_now = std::chrono::high_resolution_clock::now();
 
-			while(!glfwWindowShouldClose(window)){
+			while(!glfwWindowShouldClose(window) && is_run){
 				glfwPollEvents();
 
 				// mouse state
@@ -396,7 +405,17 @@ int program_main(void){
 
 				ImGui::SetNextWindowSize(ImVec2(700, 600), ImGuiCond_FirstUseEver);
 				ImGui::SetNextWindowPos(ImVec2(500, 50), ImGuiCond_FirstUseEver);
-				ImGui::Begin("Shader Editor");
+				ImGui::Begin("Shader Editor", nullptr, ImGuiWindowFlags_MenuBar);
+
+				if(ImGui::BeginMenuBar()){
+					if(ImGui::BeginMenu("File")){
+						if(ImGui::MenuItem("Exit")){
+							is_run = false;
+						}
+						ImGui::EndMenu();
+					}
+					ImGui::EndMenuBar();
+				}
 
 				if(ImGui::BeginTabBar("##tabbar"), ImGuiTabBarFlags_::ImGuiTabBarFlags_NoTooltip){
 
@@ -843,22 +862,37 @@ int program_main(void){
 				glfwSwapBuffers(window);
 			}
 
-			// cleanup
-			if(program){
-				glDeleteProgram(program);
-			}
-			glDeleteBuffers(1, &vbo);
-			glDeleteVertexArrays(1, &vao);
-
+			printf(" Shutting down ImGui...\n");
 			ImGui_ImplOpenGL3_Shutdown();
+			printf(" ImGui GL3 shutdown done.\n");
 			ImGui_ImplGlfw_Shutdown();
+			printf(" ImGui GLFW shutdown done.\n");
 			ImGui::DestroyContext();
+			printf(" ImGui destroyed.\n");
+
+			if(program){
+				printf(" Deleting program...\n");
+				glDeleteProgram(program);
+				printf(" Program deleted.\n");
+			}
+			printf(" Deleting FBO...\n");
+			glDeleteFramebuffers(1, &fbo);
+			glDeleteTextures(1, &colorTex);
+			printf(" FBO deleted.\n");
+			glDeleteBuffers(1, &vbo);
+			printf(" Deleting VAO...\n");
+			glDeleteVertexArrays(1, &vao);
+			printf(" VAO deleted.\n");
 		} while(0);
 
+		printf("Destroying window...\n");
 		glfwDestroyWindow(window);
+		printf("Window destroyed.\n");
 	} while(0);
 
+	printf("Terminating...\n");
 	glfwTerminate();
+	printf("Terminated.\n");
 
 	return res;
 }
