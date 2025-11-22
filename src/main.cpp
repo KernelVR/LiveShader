@@ -290,9 +290,6 @@ int program_main(void){
 
 			auto tstart = std::chrono::high_resolution_clock::now();
 
-			// ImGui state
-			ImGui::SetNextWindowSize(ImVec2(600, 400), ImGuiCond_FirstUseEver);
-
 			bool compile_requested = false;
 			bool need_recompile = false;
 			static char shader_buf[1<<16];
@@ -343,6 +340,8 @@ int program_main(void){
 				static float time_scale = 1.0f;
 
 				{ // Shader Preview
+					ImGui::SetNextWindowSize(ImVec2(405, 520), ImGuiCond_FirstUseEver);
+					ImGui::SetNextWindowPos(ImVec2(50, 50), ImGuiCond_FirstUseEver);
 					ImGui::Begin("Shader Preview");
 
 					if(is_stopped){
@@ -395,6 +394,8 @@ int program_main(void){
 					ImGui::End();
 				}
 
+				ImGui::SetNextWindowSize(ImVec2(700, 600), ImGuiCond_FirstUseEver);
+				ImGui::SetNextWindowPos(ImVec2(500, 50), ImGuiCond_FirstUseEver);
 				ImGui::Begin("Shader Editor");
 
 				if(ImGui::BeginTabBar("##tabbar"), ImGuiTabBarFlags_::ImGuiTabBarFlags_NoTooltip){
