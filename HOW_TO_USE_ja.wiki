@@ -1,0 +1,136 @@
+
+= Basic =
+
+LiveShaderは2つのウィンドウによって構成されます。
+
+* Shader Editor
+* Shader Preview
+
+== (window) Shader Editor ==
+
+このウィンドウにはタブが2つあります。
+
+* Code Editor
+* Uniform Editor
+
+またアプリケーションの終了もこのウィンドウから行います。ウィンドウ上部のメニュータブより<code>File</code> > <code>Exit</code>からアプリケーションを終了することができます。
+
+=== (tab) Code Editor ===
+
+コードを編集したり、コードをコンパイルするため機能を持ちます。
+
+==== (function) Compile log ====
+
+このヘッダーをクリックするとコンパイルログの表示/非表示を切り替える事ができます。
+
+==== (function) Compile ====
+
+このボタンを押すと現在のコードをコンパイルします。エラーによりコンパイルできない場合は、エラーの内容がコンパイルログに出力されます。
+
+==== (function) Reset ====
+
+このボタンを押すとシェーダーのコードが初期状態にリセットされます。特に理由がない場合はこのボタンを押す必要はありません。
+
+==== (function) Editor Box ====
+
+シェーダーコードを記述するためのテキストボックス。VS Codeのような便利な機能はありません。
+
+=== (tab) Uniform Editor ===
+
+Uniformを追加/削除したり、ライブで値を変更するための機能を持ちます。
+
+==== (function) Uniform import/export ====
+
+jsonへエクスポートしたり、jsonからインポートできます。
+
+注意: 壊れたjsonをインポートするとアプリケーションが強制終了する動作が確認されています。
+
+そのため有効性が示されていないjsonがある場合は、[https://tools.m-bsys.com/dev_tools/json-beautifier.php こちらのオンラインツール]でjsonの有効性を確認してからインポートしてください。
+
+===== (function) Import =====
+
+[[#function-Uniform-Box|Uniform Box]]に入力されたjsonからUniformをインポートします。上書き設定は[[#function-Enable-Uniform-Overwrite|Enable Uniform Overwrite]]に依存します。
+
+===== (function) Export =====
+
+現在のUniformを[[#function-Uniform-Box|Uniform Box]]に出力します。以前に[[#function-Uniform-Box|Uniform Box]]に入力されていた内容は戻すことができません。
+
+===== (function) Enable Uniform Overwrite =====
+
+ここにチェックを入れた状態でインポートすると、既に存在するUniformの内容を上書きします。
+
+===== (function) Uniform Box =====
+
+インポートする際にここへjsonを張り付け、エクスポートする時にはここにjsonが出力されます。
+
+==== (function) Uniform Name ====
+
+新しく追加するためのUniformの名前を入力するテキストボックス。既に同じ名前のUniformが存在する場合か、空の名前は[[#function-Add-Uniform|Add Uniform]]ボタンを押しても追加されません。
+
+==== (function) Uniform Type ====
+
+新しく追加するためのUniformの種類を選択するためのセレクトボックス。追加するUniformの種類がnoneの場合は[[#function-Add-Uniform|Add Uniform]]ボタンを押しても追加されません。
+
+==== (function) Add Uniform ====
+
+[[#function-Uniform-Name|Uniform Name]]と[[#function-Uniform-Type|Uniform Type]]で入力された内容でUniformを追加します。
+
+==== (function) Uniform List ====
+
+ここには追加されたUniformのリストが表示されます。
+
+===== (spec) float =====
+
+単独の小数Uniform型。
+
+スライダーで自由に値を変更できます。スライダーにカーソルを合わせた状態でクリックするとキーボードを使って任意の値を設定することができます。
+
+min/maxを設定するとスライダーで設定する値の下限と上限を設定することができます。
+
+===== (spec) float2 =====
+
+2つの小数Uniform型。
+
+スライダーで自由に値を変更できます。スライダーにカーソルを合わせた状態でクリックするとキーボードを使って任意の値を設定することができます。
+
+min/maxを設定するとそれぞれのスライダーで設定する値の下限と上限を設定することができます。
+
+===== (spec) float3 =====
+
+3つの小数Uniform型。
+
+スライダーで自由に値を変更できます。スライダーにカーソルを合わせた状態でクリックするとキーボードを使って任意の値を設定することができます。
+
+min/maxを設定するとそれぞれのスライダーで設定する値の下限と上限を設定することができます。
+
+===== (spec) float4 =====
+
+4つの小数Uniform型。
+
+スライダーで自由に値を変更できます。スライダーにカーソルを合わせた状態でクリックするとキーボードを使って任意の値を設定することができます。
+
+min/maxを設定するとそれぞれのスライダーで設定する値の下限と上限を設定することができます。
+
+===== (spec) color =====
+
+3つの小数Uniform型。
+
+それぞれ`R: 0`/`G: 0`/`B: 0`とあるボックスをクリックしたままマウスを左右に振ると値を変更することができます。この部分を素早くダブルクリック、またはctrlを押しながらクリックすると直接入力することができます。
+
+また`R: 0`/`G: 0`/`B: 0`より右側にあるカラーボックスをクリックするとカラーピッカーを開くことができます。ここのカラーボックスを他のカラーボックスへドラッグアンドドロップすると、色を対象のカラーボックスへコピーすることができます。
+
+== (window) Shader Preview ==
+
+=== (function) Play/Stop ===
+
+このボタンは時間経過を停止/再開できます。
+
+この値はLiveShaderによって定義された<code>iTime</code>に転送されます。
+
+=== (function) Time Scale ===
+
+[[#function-PlayStop|Play/Stop]]の時間スケールを決めるスライダー。キーボードのctrlキーを押しながらクリックする事によって任意の値を直接入力することができます。
+
+=== (function) Save ===
+
+このボタンを押すとLiveShaderアプリケーションと同じ場所にresult.pngという名前で画像が保存されます。
