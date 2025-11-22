@@ -628,7 +628,7 @@ int program_main(void){
 							ImGui::InputTextMultiline("##uniform_ie_text", uniform_ie_text, sizeof(uniform_ie_text), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight()*7), ImGuiInputTextFlags_AllowTabInput);
 						}
 
-						ImGui::InputText("##g_uniform_name", g_uniform_name, sizeof(g_uniform_name));
+						ImGui::InputText("Uniform Name", g_uniform_name, sizeof(g_uniform_name));
 						ImGui::Combo("Uniform Type", &current_uniform_type, UniformTypeList, UNIFORM_TYPE_MAX_NUMBER);
 
 						if(ImGui::Button("Add Uniform") && strlen(g_uniform_name) != 0 && g_uniform_list.end() == g_uniform_list.find(g_uniform_name) && current_uniform_type != UNIFORM_TYPE_NONE){
