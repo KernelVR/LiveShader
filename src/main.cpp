@@ -11,6 +11,7 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#undef JSON_NOEXCEPTION
 #include "json-develop/single_include/nlohmann/json.hpp"
 
 
@@ -99,8 +100,8 @@ static const char *default_vert = R"glsl(
 layout(location = 0) in vec2 aPos;
 out vec2 uv;
 void main(){
-	uv = aPos * 0.5 + 0.5;
-	gl_Position = vec4(aPos, 0.0, 1.0);
+	uv = aPos * 0.5f + 0.5f;
+	gl_Position = vec4(aPos, 0.0f, 1.0f);
 }
 )glsl";
 
@@ -117,7 +118,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord);
 
 void main(){
 	vec2 fragCoord = uv * iResolution;
-	vec4 color = vec4(0.0);
+	vec4 color = vec4(0.0f);
 	mainImage(color, fragCoord);
 	FragColor = color;
 }
@@ -125,11 +126,11 @@ void main(){
 
 static const char *default_frag_template = R"glsl(
 void mainImage(out vec4 fragColor, in vec2 fragCoord){
-	vec2 p = (fragCoord - 0.5 * iResolution) / iResolution.y;
+	vec2 p = (fragCoord - 0.5f * iResolution) / iResolution.y;
 	float t = iTime;
 	float d = length(p);
-	float v = 0.5 + 0.5 * cos(10.0 * d - t * 5.0);
-	fragColor = vec4(vec3(v), 1.0);
+	float v = 0.5f + 0.5f * cos(10.0f * d - t * 5.0f);
+	fragColor = vec4(vec3(v), 1.0f);
 }
 )glsl";
 
@@ -186,16 +187,28 @@ typedef struct _UniformValue {
 
 #include <map>
 #include <math.h>
+#include <list>
 #include <windows.h>
+
+typedef struct _Profile {
+	std::string name;
+	std::map<std::string, UniformValue> uniform_list;
+} Profile;
+
+std::list<Profile> g_profile;
 
 extern unsigned char g_mainFontJp[];
 extern int g_mainFontJp_Len;
 
 static std::chrono::_V2::system_clock::time_point prev_now;
 
-int program_main(void){
+int program_main(int argc, char **argv){
 
 	int res;
+
+	for(int i=0;i<argc;i++){
+		printf("argv[%d]: %s\n", i, argv[i]);
+	}
 
 	if(!glfwInit()){
 		return -1;
@@ -554,7 +567,12 @@ int program_main(void){
 
 										g_uniform_list[v["name"].get<std::string>()] = uv;
 									}
-								} catch(std::runtime_error &err){
+								}
+								catch(std::runtime_error &err){
+									printf("Import error: %s\n", err.what());
+								}
+								catch(const nlohmann::json::parse_error& e){
+									printf("Import error: %s\n", e.what());
 								}
 							}
 							ImGui::SameLine();
@@ -683,8 +701,9 @@ int program_main(void){
 							switch(uv.type){
 							case UNIFORM_TYPE_F1:
 								{
-									ImGui::BeginChild(v.first.c_str(), ImVec2(0, 110), true);
-									ImGui::Text("%s", v.first.c_str());
+									ImGui::BeginChild(v.first.c_str(), ImVec2(0, 120), true);
+									bool used = uv.is_setting;
+									ImGui::Checkbox(v.first.c_str(), &used);
 									ImGui::SliderFloat("##slider0", &(uv.f1.v), uv.f1.min, uv.f1.max, "%.07f");
 									float min_max[2];
 									min_max[0] = uv.f1.min;
@@ -692,9 +711,6 @@ int program_main(void){
 									ImGui::InputFloat2("min/max", min_max);
 									uv.f1.min = min_max[0];
 									uv.f1.max = min_max[1];
-									bool used = uv.is_setting;
-									ImGui::Checkbox("##used", &used);
-									ImGui::SameLine();
 									if(ImGui::Button("Remove")){
 										todo_remove = v.first;
 									}
@@ -897,9 +913,9 @@ int program_main(void){
 	return res;
 }
 
-int main(){
+int main(int argc, char **argv){
 
-	int res = program_main();
+	int res = program_main(argc, argv);
 	if(res < 0){
 		return EXIT_FAILURE;
 	}
